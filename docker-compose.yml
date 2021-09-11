@@ -4,12 +4,16 @@ services:
         image: prom/prometheus:latest
         volumes:
             - ./prometheus/alert.rules:/etc/prometheus/alert.rules
-            - ./prometheus:/etc/prometheus/:Z
+            - ./prometheus:/etc/prometheus/
         command:
             - --config.file=/etc/prometheus/prometheus.yml
         ports:
-            - 127.0.0.1:9090:9090
+            - '9090:9090'
         restart: always
+        networks:
+          prometheus:
+            aliases:
+              - prometheus
 
     node-exporter:
         image: prom/node-exporter
@@ -24,8 +28,12 @@ services:
             - --collector.filesystem.ignored-mount-points
             - ^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)
         ports:
-            - 127.0.0.1:9100:9100
+            - '9100:9100'
         restart: always
+        networks:
+          prometheus:
+            aliases:
+              - exporter
 
     grafana:
         image: grafana/grafana
@@ -33,12 +41,16 @@ services:
         depends_on:
            - prometheus
         ports:
-           - 127.0.0.1:3000:3000
+           - '3000:3000'
         volumes:
            - ./grafana:/var/lib/grafana
            - ./grafana/provisioning/:/etc/grafana/provisioning/
         restart: always
         user: "104"
+        networks:
+          prometheus:
+            aliases:
+              - grafana
 
     black-exporter:
         image: prom/blackbox-exporter
@@ -48,13 +60,17 @@ services:
         command:
            - '--config.file=./config/blackbox.yml'
         ports:
-           - 127.0.0.1:9115:9115
+           - '9115:9115'
         restart: always
+        networks:
+          prometheus:
+            aliases:
+              - blackbox
 
     alertmanager:
         image: prom/alertmanager:v0.21.0
         ports:
-          - 127.0.0.1:9093:9093
+          - '9093:9093'
         volumes:
           - ./alertmanager/:/etc/alertmanager/
         restart: always
@@ -62,6 +78,10 @@ services:
           - '--config.file=/etc/alertmanager/config.yml'
           - '--storage.path=/etc/alertmanager/data'
         user: "105"
+        networks:
+          prometheus:
+            aliases:
+              - alertmanager
 
     alertmanager-bot:
         command:
@@ -74,7 +94,15 @@ services:
           TELEGRAM_TOKEN: 883582630:AAEh3WxFGZAgsrOAuk9p1dlhMO8LpGfVwVA
         image: metalmatze/alertmanager-bot:0.4.3
         ports:
-           - 127.0.0.1:8080:8080
+           - '8080:8080'
         restart: always
         volumes:
-           - ./data:/data:Z
+           - ./data:/data
+        networks:
+          prometheus:
+            aliases:
+              - alertmanager-bot
+
+networks:
+  prometheus:
+    driver: bridge
