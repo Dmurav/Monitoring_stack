@@ -1,0 +1,6 @@
+1. Создать docker-compose.yml
+2. Запустить Prometheus, Grafana, Node Exporter, Blackbox Exporter, AlertManager
+3. Собрать метрики с https://lms.skillfactory.ru через Blackbox
+4. Собрать метрики с сервера через Node Exporter
+5. Создайте dashboard в Grafana, в котором будут отображены метрики
+6. Добавить алерты в AlertManager
